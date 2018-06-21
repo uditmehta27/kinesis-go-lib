@@ -5,12 +5,11 @@ type StreamConfig struct {
 	Shards int64
 }
 
-
 const (
 	DefaultShardCount = 1
 )
 
-func (config *StreamConfig) defaults() (error) {
+func (config *StreamConfig) defaults() error {
 	if config.Stream == "" {
 		return NoStreamNameErr
 	}

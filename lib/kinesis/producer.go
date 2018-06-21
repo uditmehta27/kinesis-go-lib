@@ -2,25 +2,31 @@ package kinesis
 
 import "errors"
 
-type Producer interface {
-	Start()
-	Produce(pkey string, msg []byte) (error)
-	Stop()
-}
-
-type ProduceMessage struct {
-	Message []byte
-	PartitionKey string
-	Response chan<- error
-}
-
-
 var (
-	NotImplementedErr = errors.New("producer type not implemented")
+	NotImplementedErr  = errors.New("producer type not implemented")
 	InvalidProducerErr = errors.New("producer type invalid")
 )
 
-func CreateProducer (conf *ProducerConfig) (Producer, error) {
+type Producer interface {
+	Start()
+	Produce(pkey string, msg []byte) error
+	Stop()
+}
+
+type ProduceRequest struct {
+	Message      []byte
+	PartitionKey string
+	Response     chan<- error
+}
+
+//Finish request to unblock the caller
+func (m ProduceRequest) finishRequest(err error) {
+	if m.Response != nil {
+		m.Response <- err
+	}
+}
+
+func CreateProducer(conf *ProducerConfig) (Producer, error) {
 	err := conf.defaults()
 	if err != nil {
 		return nil, err
@@ -28,14 +34,14 @@ func CreateProducer (conf *ProducerConfig) (Producer, error) {
 
 	var producer Producer
 
-	switch  conf.Type {
+	switch conf.Type {
 
 	case "record":
-		producer, err = NewSimpleProducer(conf)
-		if err != nil{
+		producer, err = NewRecordProducer(conf)
+		if err != nil {
 			return nil, err
 		}
-		return producer,nil
+		return producer, nil
 
 	case "batch":
 		return nil, NotImplementedErr
@@ -44,5 +50,3 @@ func CreateProducer (conf *ProducerConfig) (Producer, error) {
 		return nil, InvalidProducerErr
 	}
 }
-
-

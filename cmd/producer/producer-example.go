@@ -36,7 +36,6 @@ func main() {
 
 	pconfig := kinesis.ProducerConfig{
 		Stream:			config.Stream,
-		Concurrency:	3,
 		Type:			config.Type,
 		Client:			kconn,
 	}
@@ -51,12 +50,8 @@ func main() {
 
 	p.Start()
 
-	for i := 0 ; i < 100; i ++ {
-		err = p.Produce(fmt.Sprintf("key-%v",i), []byte(fmt.Sprintf("hello there - %v", i)))
-		time.Sleep(5 * time.Second)
-		if err != nil {
-			events.Log("error publishing record %{error]v", err)
-		}
+	for i := 0 ; i < 5; i ++ {
+		go  p.Produce(fmt.Sprintf("key-%v",i), []byte(fmt.Sprintf("hello there - %v", i)))
 	}
 
 	time.Sleep(20 * time.Second)
